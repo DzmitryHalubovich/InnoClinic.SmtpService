@@ -1,6 +1,6 @@
 ﻿using InnoClinic.SharedModels.MQMessages.Appointments;
 
-namespace SmtpAPI.Services;
+namespace NotificationService.API.Services;
 
 public interface IEmailService
 {

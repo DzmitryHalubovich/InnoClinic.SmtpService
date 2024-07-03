@@ -1,12 +1,11 @@
 ﻿using InnoClinic.SharedModels.MQMessages.Appointments;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using SmtpAPI.RabbitMQ.QueuesBindingParameters;
-using SmtpAPI.Services;
-using SmtpService.API.RabbitMQ.QueuesBindingParameters;
+using NotificationService.API.RabbitMQ.QueuesBindingParameters;
+using NotificationService.API.Services;
 using System.Text.Json;
 
-namespace SmtpAPI.RabbitMQ;
+namespace NotificationService.API.RabbitMQ;
 
 public class RabbitListener
 {

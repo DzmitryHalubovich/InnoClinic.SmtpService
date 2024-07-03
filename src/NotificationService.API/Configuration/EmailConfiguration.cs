@@ -1,4 +1,4 @@
-﻿namespace SmtpAPI.Configuration;
+﻿namespace NotificationService.API.Configuration;
 
 public class EmailConfiguration
 {

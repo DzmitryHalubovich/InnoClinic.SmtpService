@@ -1,4 +1,4 @@
-using SmtpAPI.Extentions;
+using NotificationService.API.Extentions;
 
 var builder = WebApplication.CreateBuilder(args);
 

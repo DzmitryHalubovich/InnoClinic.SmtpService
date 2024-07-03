@@ -1,10 +1,10 @@
-﻿using SmtpAPI.Configuration;
-using SmtpAPI.DocumentHttpClient;
-using SmtpAPI.Services;
-using SmtpAPI.RabbitMQ;
-using SmtpService.API.RabbitMQ.QueuesBindingParameters;
+﻿using NotificationService.API.Configuration;
+using NotificationService.API.DocumentHttpClient;
+using NotificationService.API.Services;
+using NotificationService.API.RabbitMQ;
+using NotificationService.API.RabbitMQ.QueuesBindingParameters;
 
-namespace SmtpAPI.Extentions;
+namespace NotificationService.API.Extentions;
 
 public static class WebApplicationBuilderExtention
 {

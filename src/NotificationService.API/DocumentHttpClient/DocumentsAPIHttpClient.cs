@@ -1,4 +1,4 @@
-﻿namespace SmtpAPI.DocumentHttpClient;
+﻿namespace NotificationService.API.DocumentHttpClient;
 
 public class DocumentsAPIHttpClient
 {

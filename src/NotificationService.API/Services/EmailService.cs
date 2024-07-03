@@ -2,10 +2,10 @@
 using MailKit.Net.Smtp;
 using MimeKit;
 using MimeKit.Text;
-using SmtpAPI.Configuration;
-using SmtpAPI.DocumentHttpClient;
+using NotificationService.API.Configuration;
+using NotificationService.API.DocumentHttpClient;
 
-namespace SmtpAPI.Services;
+namespace NotificationService.API.Services;
 
 public class EmailService : IEmailService
 {
