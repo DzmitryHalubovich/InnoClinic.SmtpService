@@ -5,7 +5,7 @@ using MimeKit.Text;
 using SmtpAPI.Configuration;
 using SmtpAPI.DocumentHttpClient;
 
-namespace SmtpAPI.EmailService;
+namespace SmtpAPI.Services;
 
 public class EmailService : IEmailService
 {
@@ -36,7 +36,7 @@ public class EmailService : IEmailService
 
     public async Task SendAppointmentResultCreated(AppointmentResultCreatedMessage message)
     {
-        var file = await _documentsHttpClient.DownloadAppointmentResultAsync(message.AppointmentResultId);
+        var file = await _documentsHttpClient.DownloadAppointmentResultFileAsync(message.AppointmentResultId);
 
         var emailMessage = CreateMessageWithCreatedResultFile(message, file);
 
@@ -45,7 +45,7 @@ public class EmailService : IEmailService
 
     public async Task SendAppointmentResultUpdated(AppointmentResultUpdatedMessage message)
     {
-        var file = await _documentsHttpClient.DownloadAppointmentResultAsync(message.AppointmentResultId);
+        var file = await _documentsHttpClient.DownloadAppointmentResultFileAsync(message.AppointmentResultId);
 
         var emailMessage = CreateMessageWithUpdatedResultFile(message, file);
 

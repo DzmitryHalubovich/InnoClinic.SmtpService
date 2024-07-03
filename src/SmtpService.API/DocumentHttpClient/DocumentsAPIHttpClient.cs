@@ -11,7 +11,7 @@ public class DocumentsAPIHttpClient
         HttpClient = httpClient;
     }
 
-    public async Task<Stream> DownloadAppointmentResultAsync(Guid id)
+    public async Task<Stream> DownloadAppointmentResultFileAsync(Guid id)
     {
         var response = await HttpClient.GetAsync($"{id}");
 

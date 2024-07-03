@@ -1,25 +1,43 @@
 ﻿using InnoClinic.SharedModels.MQMessages.Appointments;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using SmtpAPI.EmailService;
+using SmtpAPI.RabbitMQ.QueuesBindingParameters;
+using SmtpAPI.Services;
+using SmtpService.API.RabbitMQ.QueuesBindingParameters;
 using System.Text.Json;
 
 namespace SmtpAPI.RabbitMQ;
 
 public class RabbitListener
 {
+    private readonly AppointmentApprovedQueueBindingParameters _appointmentApprovedBindingParameters;
+    private readonly AppointmentNotificationQueueBindingParameters _appointmentNotificationBindingParameters;
+    private readonly AppointmentResultCreatedQueueBindingParameters _appointmentResultCreatedBindingParameters;
+    private readonly AppointmentResultUpdatedQueueBindingParameters _appointmentResultUpdatedBindingParameters;
+
     private readonly IEmailService _emailSender;
+    private readonly IServiceScope _scope;
     private IConnection? _connection;
     private IModel _channel;
 
-    public RabbitListener(IEmailService emailService)
+    public RabbitListener(IServiceProvider serviceProvider,
+        AppointmentApprovedQueueBindingParameters appointmentApprovedBindingParameters,
+        AppointmentNotificationQueueBindingParameters appointmentNotificationBindingParameters,
+        AppointmentResultCreatedQueueBindingParameters appointmentResultCreatedBindingParameters,
+        AppointmentResultUpdatedQueueBindingParameters appointmentResultUpdatedBindingParameters)
     {
         var factory = new ConnectionFactory { HostName = "localhost" };
+
+        _appointmentApprovedBindingParameters = appointmentApprovedBindingParameters;
+        _appointmentNotificationBindingParameters = appointmentNotificationBindingParameters;
+        _appointmentResultCreatedBindingParameters = appointmentResultCreatedBindingParameters;
+        _appointmentResultUpdatedBindingParameters = appointmentResultUpdatedBindingParameters;
 
         _connection = factory.CreateConnection();
         _channel = _connection.CreateModel();
 
-        _emailSender = emailService;
+        _scope = serviceProvider.CreateScope();
+        _emailSender = _scope.ServiceProvider.GetService<IEmailService>();
     }
 
     public void Register()
@@ -32,27 +50,14 @@ public class RabbitListener
 
     public void Deregister()
     {
-        _channel.Close();
-        _connection.Close();
+        _channel?.Close();
+        _connection?.Close();
+        _scope.Dispose();
     }
 
     private void RegisterAppointmentApprovedQueue()
     {
-        var exchangeName = "appointment";
-        var routingKey = "appointment.event.approved";
-        var queueName = "appointment-approved-queue";
-
-        _channel.ExchangeDeclare(exchange: exchangeName, type: ExchangeType.Direct);
-
-        _channel.QueueDeclare(queue: queueName,
-                              durable: false,
-                              exclusive: false,
-                              autoDelete: false);
-
-        _channel.QueueBind(queue: queueName,
-                           exchange: exchangeName,
-                           routingKey: queueName,
-                           arguments: null);
+        SetQueue(_appointmentApprovedBindingParameters);
 
         var consumer = new EventingBasicConsumer(_channel);
 
@@ -65,26 +70,12 @@ public class RabbitListener
             await _emailSender.SendAppointmentApprovedNotification(appointmentInformation);
         };
 
-        _channel.BasicConsume(queue: queueName, autoAck: true, consumer: consumer);
+        _channel.BasicConsume(queue: _appointmentApprovedBindingParameters.QueueName, autoAck: true, consumer: consumer);
     }
 
     private void RegisterAppointmentNotificationQueue()
     {
-        var exchangeName = "appointment";
-        var routingKey = "appointment.event.notificated";
-        var queueName = "appointment-notificated-queue";
-
-        _channel.ExchangeDeclare(exchange: exchangeName, type: ExchangeType.Direct);
-
-        _channel.QueueDeclare(queue: queueName,
-                              durable: false,
-                              exclusive: false,
-                              autoDelete: false);
-
-        _channel.QueueBind(queue: queueName,
-                           exchange: exchangeName,
-                           routingKey: queueName,
-                           arguments: null);
+        SetQueue(_appointmentNotificationBindingParameters);
 
         var consumer = new EventingBasicConsumer(_channel);
 
@@ -97,26 +88,12 @@ public class RabbitListener
             await _emailSender.SendAppointmentRemindNotification(appointmentInformation);
         };
 
-        _channel.BasicConsume(queue: queueName, autoAck: true, consumer: consumer);
+        _channel.BasicConsume(queue: _appointmentNotificationBindingParameters.QueueName, autoAck: true, consumer: consumer);
     }
 
     private void RegisterAppointmentResultCreatedQueue()
     {
-        var exchangeName = "appointment";
-        var routingKey = "appointmentResult.event.created";
-        var queueName = "appointmentResult-created-queue";
-
-        _channel.ExchangeDeclare(exchange: exchangeName, type: ExchangeType.Direct);
-
-        _channel.QueueDeclare(queue: queueName,
-                              durable: false,
-                              exclusive: false,
-                              autoDelete: false);
-
-        _channel.QueueBind(queue: queueName,
-                           exchange: exchangeName,
-                           routingKey: queueName,
-                           arguments: null);
+        SetQueue(_appointmentResultCreatedBindingParameters);
 
         var consumer = new EventingBasicConsumer(_channel);
 
@@ -129,26 +106,12 @@ public class RabbitListener
             await _emailSender.SendAppointmentResultCreated(appointmentInformation);
         };
 
-        _channel.BasicConsume(queue: queueName, autoAck: true, consumer: consumer);
+        _channel.BasicConsume(queue: _appointmentResultCreatedBindingParameters.QueueName, autoAck: true, consumer: consumer);
     }
 
     private void RegisterAppointmentResultUpdatedQueue()
     {
-        var exchangeName = "appointment";
-        var routingKey = "appointmentResult.event.updated";
-        var queueName = "appointmentResult-updated-queue";
-
-        _channel.ExchangeDeclare(exchange: exchangeName, type: ExchangeType.Direct);
-
-        _channel.QueueDeclare(queue: queueName,
-                              durable: false,
-                              exclusive: false,
-                              autoDelete: false);
-
-        _channel.QueueBind(queue: queueName,
-                           exchange: exchangeName,
-                           routingKey: queueName,
-                           arguments: null);
+        SetQueue(_appointmentResultUpdatedBindingParameters);
 
         var consumer = new EventingBasicConsumer(_channel);
 
@@ -161,6 +124,22 @@ public class RabbitListener
             await _emailSender.SendAppointmentResultUpdated(appointmentInformation);
         };
 
-        _channel.BasicConsume(queue: queueName, autoAck: true, consumer: consumer);
+        _channel.BasicConsume(queue: _appointmentResultUpdatedBindingParameters.QueueName, autoAck: true, consumer: consumer);
+    }
+
+    private void SetQueue(BaseBindingQueueParameters bindingQueueParameters)
+    {
+        _channel.ExchangeDeclare(exchange: bindingQueueParameters.ExchangeName, type: ExchangeType.Direct);
+
+        _channel.QueueDeclare(queue: bindingQueueParameters.QueueName,
+                              durable: false,
+                              exclusive: false,
+                              autoDelete: false,
+                              arguments: null);
+
+        _channel.QueueBind(queue: bindingQueueParameters.QueueName,
+                           exchange: bindingQueueParameters.ExchangeName,
+                           routingKey: bindingQueueParameters.RoutingKey,
+                           arguments: null);
     }
 }
