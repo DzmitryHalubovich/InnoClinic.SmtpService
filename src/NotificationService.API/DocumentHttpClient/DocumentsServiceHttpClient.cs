@@ -1,12 +1,12 @@
 ﻿namespace NotificationService.API.DocumentHttpClient;
 
-public class DocumentsAPIHttpClient
+public class DocumentsServiceHttpClient
 {
     public HttpClient HttpClient { get; set; }
 
-    public DocumentsAPIHttpClient(HttpClient httpClient)
+    public DocumentsServiceHttpClient(HttpClient httpClient, IConfiguration configuration)
     {
-        httpClient.BaseAddress = new Uri("https://localhost:7208/api/documents/");
+        httpClient.BaseAddress = new Uri(configuration["DocumentsServiceUri"]!);
 
         HttpClient = httpClient;
     }

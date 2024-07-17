@@ -32,17 +32,22 @@ public static class WebApplicationBuilderExtention
             .GetSection("RabbitMqConsumerQueuesParameters:AppointmentResultUpdatedEvent")
             .Get<AppointmentResultUpdatedQueueBindingParameters>();
 
+        var emailConfirmationQueueBindingParameters = builder.Configuration
+            .GetSection("RabbitMqConsumerQueuesParameters:EmailConfirmationEvent")
+            .Get<EmailConfirmationQueueBindingParameters>();
+
         builder.Services.AddSingleton(appointmentApprovedBindingParameters);
         builder.Services.AddSingleton(appointmentNotificationBindingParameters);
         builder.Services.AddSingleton(appointmentResultCreatedBindingParameters);
         builder.Services.AddSingleton(appointmentResultUpdatedBindingParameters);
+        builder.Services.AddSingleton(emailConfirmationQueueBindingParameters);
 
         builder.Services.AddSingleton(emailConfig);
         builder.Services.AddSingleton<RabbitListener>();
 
         builder.Services.AddTransient<IEmailService, EmailService>();
 
-        builder.Services.AddHttpClient<DocumentsAPIHttpClient>();
+        builder.Services.AddHttpClient<DocumentsServiceHttpClient>();
 
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();

@@ -14,6 +14,7 @@ public class RabbitListener
     private readonly AppointmentNotificationQueueBindingParameters _appointmentNotificationBindingParameters;
     private readonly AppointmentResultCreatedQueueBindingParameters _appointmentResultCreatedBindingParameters;
     private readonly AppointmentResultUpdatedQueueBindingParameters _appointmentResultUpdatedBindingParameters;
+    private readonly EmailConfirmationQueueBindingParameters _emailConfirmationQueueBindingParameters;
 
     private readonly IEmailService _emailSender;
     private readonly IServiceScope _scope;
@@ -24,7 +25,8 @@ public class RabbitListener
         AppointmentApprovedQueueBindingParameters appointmentApprovedBindingParameters,
         AppointmentNotificationQueueBindingParameters appointmentNotificationBindingParameters,
         AppointmentResultCreatedQueueBindingParameters appointmentResultCreatedBindingParameters,
-        AppointmentResultUpdatedQueueBindingParameters appointmentResultUpdatedBindingParameters)
+        AppointmentResultUpdatedQueueBindingParameters appointmentResultUpdatedBindingParameters,
+        EmailConfirmationQueueBindingParameters emailConfirmationQueueBindingParameters)
     {
         var factory = new ConnectionFactory { HostName = "localhost" };
 
@@ -38,6 +40,8 @@ public class RabbitListener
 
         _scope = serviceProvider.CreateScope();
         _emailSender = _scope.ServiceProvider.GetService<IEmailService>();
+        _emailConfirmationQueueBindingParameters = emailConfirmationQueueBindingParameters;
+
     }
 
     public void Register()
@@ -56,14 +60,10 @@ public class RabbitListener
         _scope.Dispose();
     }
 
+
     private void RegisterEmailConfirmationQueue()
     {
-        var bindingParameters = new BaseBindingQueueParameters(
-            ExchangeName: "email-confirm-queue",
-            QueueName: "Registration",
-            RoutingKey: "email.command.confirm");
-
-        SetQueue(bindingParameters);
+        SetQueue(_emailConfirmationQueueBindingParameters);
 
         var consumer = new EventingBasicConsumer(_channel);
 
@@ -80,7 +80,7 @@ public class RabbitListener
             });
         };
 
-        _channel.BasicConsume(queue: bindingParameters.QueueName, autoAck: true, consumer: consumer);
+        _channel.BasicConsume(queue: _emailConfirmationQueueBindingParameters.QueueName, autoAck: true, consumer: consumer);
     }
 
     private void RegisterAppointmentApprovedQueue()

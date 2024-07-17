@@ -10,11 +10,11 @@ namespace NotificationService.API.Services;
 
 public class EmailService : IEmailService
 {
-    private readonly DocumentsAPIHttpClient _documentsHttpClient;
+    private readonly DocumentsServiceHttpClient _documentsHttpClient;
     private readonly EmailConfiguration _emailConfiguration;
     private readonly IConfiguration _configuration;
 
-    public EmailService(EmailConfiguration emailConfiguration, IConfiguration configuration, DocumentsAPIHttpClient documentsHttpClient)
+    public EmailService(EmailConfiguration emailConfiguration, IConfiguration configuration, DocumentsServiceHttpClient documentsHttpClient)
     {
         _configuration = configuration;
         _emailConfiguration = emailConfiguration;
