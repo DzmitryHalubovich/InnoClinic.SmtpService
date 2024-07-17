@@ -4,6 +4,7 @@ using RabbitMQ.Client.Events;
 using NotificationService.API.RabbitMQ.QueuesBindingParameters;
 using NotificationService.API.Services;
 using System.Text.Json;
+using InnoClinic.SharedModels.MQMessages.IdentityServer;
 
 namespace NotificationService.API.RabbitMQ;
 
@@ -45,6 +46,7 @@ public class RabbitListener
         RegisterAppointmentNotificationQueue();
         RegisterAppointmentResultCreatedQueue();
         RegisterAppointmentResultUpdatedQueue();
+        RegisterEmailConfirmationQueue();
     }
 
     public void Deregister()
@@ -52,6 +54,33 @@ public class RabbitListener
         _channel?.Close();
         _connection?.Close();
         _scope.Dispose();
+    }
+
+    private void RegisterEmailConfirmationQueue()
+    {
+        var bindingParameters = new BaseBindingQueueParameters(
+            ExchangeName: "email-confirm-queue",
+            QueueName: "Registration",
+            RoutingKey: "email.command.confirm");
+
+        SetQueue(bindingParameters);
+
+        var consumer = new EventingBasicConsumer(_channel);
+
+        consumer.Received += async (model, args) =>
+        {
+            var body = args.Body.ToArray();
+
+            var emailConfirmationInformation = JsonSerializer.Deserialize<EmailConfirmationMessage>(body);
+
+            await _emailSender.SendEmailConfirmation(new EmailConfirmationMessage() 
+            { 
+                Email = emailConfirmationInformation.Email, 
+                ConfirmationLink = emailConfirmationInformation.ConfirmationLink
+            });
+        };
+
+        _channel.BasicConsume(queue: bindingParameters.QueueName, autoAck: true, consumer: consumer);
     }
 
     private void RegisterAppointmentApprovedQueue()

@@ -1,4 +1,5 @@
 ﻿using InnoClinic.SharedModels.MQMessages.Appointments;
+using InnoClinic.SharedModels.MQMessages.IdentityServer;
 using MailKit.Net.Smtp;
 using MimeKit;
 using MimeKit.Text;
@@ -50,6 +51,28 @@ public class EmailService : IEmailService
         var emailMessage = CreateMessageWithUpdatedResultFile(message, file);
 
         await Send(emailMessage);
+    }
+
+    public async Task SendEmailConfirmation(EmailConfirmationMessage message)
+    {
+        var emailMessage = CreateEmailConfirmMessage(message);
+
+        await Send(emailMessage);
+    }
+
+    private MimeMessage CreateEmailConfirmMessage(EmailConfirmationMessage message)
+    {
+        var emailMessage = new MimeMessage();
+
+        emailMessage.From.Add(new MailboxAddress("InnoClinic Administration", _emailConfiguration.From));
+        emailMessage.To.Add(new MailboxAddress(message.Email, message.Email));
+        emailMessage.Subject = "Confirmation email link";
+        emailMessage.Body = new TextPart(TextFormat.Plain)
+        {
+            Text = message.ConfirmationLink
+        };
+
+        return emailMessage;
     }
 
     private MimeMessage CreateAppointmentApprovedEmailMessage(AppointmentApprovedMessage message)
