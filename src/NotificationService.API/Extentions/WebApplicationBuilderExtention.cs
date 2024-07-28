@@ -2,6 +2,8 @@
 using NotificationService.API.Services;
 using MassTransit;
 using NotificationService.API.MassTransit;
+using NotificationService.API.Configuration;
+using InnoClinic.SharedModels.MQMessages.IdentityServer;
 
 namespace NotificationService.API.Extentions;
 
@@ -9,7 +11,12 @@ public static class WebApplicationBuilderExtention
 {
     public static void ConfigureServices(this WebApplicationBuilder builder)
     {
-        builder.Services.AddTransient<IEmailService, EmailService>();
+        var emailConfiguration = builder.Configuration.GetSection("EmailConfiguration")
+            .Get<EmailConfiguration>();
+
+        builder.Services.AddSingleton(emailConfiguration);
+
+        builder.Services.AddScoped<IEmailService, EmailService>();
 
         builder.Services.AddMassTransit(x =>
         {
@@ -23,6 +30,7 @@ public static class WebApplicationBuilderExtention
             x.AddConsumer<AppointmentResultCreatedConsumer>();
             x.AddConsumer<AppointmentResultUpdatedConsumer>();
             x.AddConsumer<RegisterEmailConfirmationConsumer>();
+            x.AddConsumer<WorkerProfileRegisteredConsumer>();
 
             x.AddSagaStateMachines(assembly);
             x.AddSagas(assembly);
@@ -59,6 +67,11 @@ public static class WebApplicationBuilderExtention
                 cfg.ReceiveEndpoint("email-confirm-queue", queueConfiguration =>
                 {
                     queueConfiguration.Consumer<RegisterEmailConfirmationConsumer>(context);
+                });
+
+                cfg.ReceiveEndpoint("worker-user-created-send-credentials", queueConfiguration =>
+                {
+                    queueConfiguration.Consumer<WorkerProfileRegisteredConsumer>(context);
                 });
             });
 

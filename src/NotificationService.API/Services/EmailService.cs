@@ -1,5 +1,6 @@
 ﻿using InnoClinic.SharedModels.MQMessages.Appointments;
 using InnoClinic.SharedModels.MQMessages.IdentityServer;
+using InnoClinic.SharedModels.MQMessages.Profiles;
 using MailKit.Net.Smtp;
 using MimeKit;
 using MimeKit.Text;
@@ -14,11 +15,21 @@ public class EmailService : IEmailService
     private readonly EmailConfiguration _emailConfiguration;
     private readonly IConfiguration _configuration;
 
-    public EmailService(EmailConfiguration emailConfiguration, IConfiguration configuration, DocumentsServiceHttpClient documentsHttpClient)
+    public EmailService(EmailConfiguration emailConfiguration, 
+        IConfiguration configuration, 
+        DocumentsServiceHttpClient documentsHttpClient)
     {
         _configuration = configuration;
         _emailConfiguration = emailConfiguration;
         _documentsHttpClient = documentsHttpClient;
+    }
+
+
+    public async Task SendDoctorProfileCreated(WorkerProfileRegisteredMessage message)
+    {
+        var emailMessage = CreateDoctorProfileCreatedMessage(message);
+
+        await Send(emailMessage);
     }
 
     public async Task SendAppointmentApprovedNotification(AppointmentApprovedMessage message)
@@ -70,6 +81,21 @@ public class EmailService : IEmailService
         emailMessage.Body = new TextPart(TextFormat.Plain)
         {
             Text = message.ConfirmationLink
+        };
+
+        return emailMessage;
+    }
+
+    private MimeMessage CreateDoctorProfileCreatedMessage(WorkerProfileRegisteredMessage message)
+    {
+        var emailMessage = new MimeMessage();
+
+        emailMessage.From.Add(new MailboxAddress("InnoClinic Administration", _emailConfiguration.From));
+        emailMessage.To.Add(new MailboxAddress(message.Email, message.Email));
+        emailMessage.Subject = "Your doctor profile was created";
+        emailMessage.Body = new TextPart(TextFormat.Plain)
+        {
+            Text = $"Hello, your working profile was created. Your credentials: email: \"{message.Email}\", password: \"{message.Password}\""
         };
 
         return emailMessage;
@@ -198,8 +224,8 @@ public class EmailService : IEmailService
 
                 client.AuthenticationMechanisms.Remove("XOAUTH2");
 
-                var userName = _configuration["AccountUserName"];
-                var password = _configuration["AccountPassword"];
+                 var userName = _configuration["AccountUserName"];
+                 var password = _configuration["AccountPassword"];
 
                 await client.AuthenticateAsync(userName, password);
 
