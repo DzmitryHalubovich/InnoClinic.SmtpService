@@ -6,8 +6,6 @@ builder.ConfigureServices();
 
 var app = builder.Build();
 
-app.UseRabbitListener();
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
