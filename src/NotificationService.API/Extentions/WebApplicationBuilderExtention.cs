@@ -3,7 +3,6 @@ using NotificationService.API.Services;
 using MassTransit;
 using NotificationService.API.MassTransit;
 using NotificationService.API.Configuration;
-using InnoClinic.SharedModels.MQMessages.IdentityServer;
 
 namespace NotificationService.API.Extentions;
 
@@ -36,12 +35,15 @@ public static class WebApplicationBuilderExtention
             x.AddSagas(assembly);
             x.AddActivities(assembly);
 
+            var rabbitMqConfiguration = builder.Configuration.GetSection("RabbitMQ")
+                .Get<RabbitMQConfiguration>();
+
             x.UsingRabbitMq((context, cfg) =>
             {
-                cfg.Host("localhost", "/", h =>
+                cfg.Host(rabbitMqConfiguration.HostName, "/", h =>
                 {
-                    h.Username("guest");
-                    h.Password("guest");
+                    h.Username(rabbitMqConfiguration.UserName);
+                    h.Password(rabbitMqConfiguration.Password);
                 });
 
                 cfg.ReceiveEndpoint("appointment-approved-queue", queueConfigurator =>
